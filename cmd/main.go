@@ -10,6 +10,7 @@ import (
 )
 type Config struct{
     APIServerToken string `toml:"APIServerToken"`
+    OTTExpire int `toml:"OTTExpire"`
     MailConfig Mail `toml:"Mail"`
 }
 type Mail struct{
@@ -30,6 +31,7 @@ func main(){
         log.Fatal(err)
     }
     fmt.Println(ServerConfig)
+    internal.InitializeGC(ServerConfig.OTTExpire)
     Token = &ServerConfig.APIServerToken
     smtpMail.Initialize(ServerConfig.MailConfig.SmtpAddress, ServerConfig.MailConfig.Port, ServerConfig.MailConfig.From, ServerConfig.MailConfig.Username, ServerConfig.MailConfig.Password, ServerConfig.MailConfig.Sub, ServerConfig.MailConfig.Msg)
     internal.APIServer(ServerConfig.APIServerToken)
