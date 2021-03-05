@@ -1,12 +1,18 @@
 package internal
 import (
 	"crypto/rand"
-    "net/http"
 	"fmt"
-    "time"
 	"gotti/smtpMail"
+	"net/http"
+	"regexp"
+	"sync"
+	"time"
 )
-var Tokens = make(map[string]userToken,5)
+type SafeTokens struct{
+    mu sync.Mutex
+    Tokens map[string](userToken)
+}
+var safeTokens SafeTokens
 
 type userToken struct{
     username string
@@ -21,21 +27,19 @@ type APIRegisterHandler struct{
 func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     u := r.URL.Query().Get("username")
     t := r.URL.Query().Get("appToken")
-    if t!=a.token{
-        fmt.Println(t)
-        w.WriteHeader(401)
-        return
-    }
-    if u=="" {
+    if t!=a.token || isProperUsername(u){
+        fmt.Println(t,u)
         w.WriteHeader(401)
         return
     }
     //TODO: database access
     /* 疑似コードは下
     if (db.user.isRegistered){
+        w.WriteHeader(401)
         return errors.New("user already registered")
     }
     if (db.user.isExists){
+        w.WriteHeader(401)
         return errors.New("this user don't have an uec account")
     }
     */
@@ -47,7 +51,11 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
         fmt.Println(err)
     }
 
-    Tokens[u] = userToken{username: u, ott:ott, registered: time.Now()}
+    //Handlerはgoroutineで呼び出されるのでスレッドセーフでないスライスはロック
+    safeTokens.mu.Lock()
+    safeTokens.Tokens[u] = userToken{username: u, ott:ott, registered: time.Now()}
+    safeTokens.mu.Unlock()
+
     fmt.Println(addr)
     err = smtpMail.Send(addr,ott)
     if err != nil{
@@ -65,12 +73,8 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     u := r.URL.Query().Get("username")
     t := r.URL.Query().Get("appToken")
     o := r.URL.Query().Get("ott")
-    if t!=a.token{
-        fmt.Println(t)
-        w.WriteHeader(401)
-        return
-    }
-    if u=="" {
+    if t!=a.token || !isProperUsername(u){
+        fmt.Println(t,u)
         w.WriteHeader(401)
         return
     }
@@ -84,15 +88,22 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     db.user.isRegisterd=true
     */
-    v,ok := Tokens[u]
-    if !ok{
+    safeTokens.mu.Lock()
+    v,ok := safeTokens.Tokens[u]
+    if !ok || v.ott!=o{
         w.WriteHeader(401)
         return
-    }
-    if v.ott!=o {
-        w.WriteHeader(401)
+    } else {
+        w.WriteHeader(200)
+        delete(safeTokens.Tokens,u)
         return
     }
-    delete(Tokens,u)
-    w.WriteHeader(200)
+    safeTokens.mu.Unlock()
+
+}
+
+//弊学の学籍番号かどうか確認 ok: a2010123, ng: abc2010123
+func isProperUsername(u string) bool{
+    usernameValidater := regexp.MustCompile(`[a-z]\d{7}`)
+    return usernameValidater.MatchString(u)
 }

@@ -10,13 +10,13 @@ func InitializeGC(e int){
         for {
             select {
             case <-t.C:
-                gerbaseCollect(e)
+                gerbageCollect(e)
             }
         }
     }()
 }
 
-func gerbaseCollect(e int){
+func gerbageCollect(e int){
     now := time.Now()
     for k,v := range Tokens {
         if now.After(v.registered.Add(time.Duration(e)*time.Minute)) {
