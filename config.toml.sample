@@ -1,4 +1,7 @@
 APIServerToken = ""
+OTTExpire = 5
+UserListDatabase = "./users.db"
+UserListFile = "./users"
 [Mail]
 smtpAddress = ""
 port = "587"
@@ -6,4 +9,4 @@ from = ""
 username = ""
 password = ""
 sub = "[uec-fakeSSO] 認証用ワンタイムトークン"
-msg = "電気通信大学のUECメールの所有を確認します．指示に従って以下のワンタイムトークンを画面に入力してください．\nもし身に覚えが無ければ無視してください．\nワンタイムトークン:"
+msg = "電気通信大学のUECメールの所有を確認します．指示に従って以下のワンタイムトークンを画面に入力してください．\nもし身に覚えが無ければ無視してください．\nワンタイムトークン: "

@@ -3,16 +3,17 @@ import (
 	"crypto/rand"
 	"fmt"
 	"gotti/smtpMail"
+    "gotti/utils"
+    "gotti/userdb"
 	"net/http"
-	"regexp"
 	"sync"
 	"time"
 )
-type SafeTokens struct{
+type typeSafeTokens struct{
     mu sync.Mutex
     Tokens map[string](userToken)
 }
-var safeTokens SafeTokens
+var SafeTokens = typeSafeTokens{Tokens:make(map[string](userToken),10)}
 
 type userToken struct{
     username string
@@ -22,27 +23,28 @@ type userToken struct{
 
 type APIRegisterHandler struct{
     token string
+    db userdb.UserDatabase
 }
 
 func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     u := r.URL.Query().Get("username")
     t := r.URL.Query().Get("appToken")
-    if t!=a.token || isProperUsername(u){
-        fmt.Println(t,u)
+    if t!=a.token || !utils.IsProperUsername(u){
+        fmt.Println(t,u,utils.IsProperUsername(u))
         w.WriteHeader(401)
         return
     }
-    //TODO: database access
-    /* 疑似コードは下
-    if (db.user.isRegistered){
-        w.WriteHeader(401)
-        return errors.New("user already registered")
+    b,e := a.db.IsRegisteredUser(u)
+    if e != nil{
+        w.Write([]byte("internal server error"))
+        w.WriteHeader(500)
+        return
     }
-    if (db.user.isExists){
+    if b{
         w.WriteHeader(401)
-        return errors.New("this user don't have an uec account")
+        w.Write([]byte("This user is already registered"))
+        return
     }
-    */
     addr := u+"@edu.cc.uec.ac.jp"
     buf := make([]byte,4)
     _, err := rand.Read(buf)
@@ -52,9 +54,9 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
 
     //Handlerはgoroutineで呼び出されるのでスレッドセーフでないスライスはロック
-    safeTokens.mu.Lock()
-    safeTokens.Tokens[u] = userToken{username: u, ott:ott, registered: time.Now()}
-    safeTokens.mu.Unlock()
+    SafeTokens.mu.Lock()
+    SafeTokens.Tokens[u] = userToken{username: u, ott:ott, registered: time.Now()}
+    SafeTokens.mu.Unlock()
 
     fmt.Println(addr)
     err = smtpMail.Send(addr,ott)
@@ -67,13 +69,14 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type APIVerifyHandler struct {
     token string
+    db userdb.UserDatabase
 }
 
 func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     u := r.URL.Query().Get("username")
     t := r.URL.Query().Get("appToken")
     o := r.URL.Query().Get("ott")
-    if t!=a.token || !isProperUsername(u){
+    if t!=a.token || !utils.IsProperUsername(u){
         fmt.Println(t,u)
         w.WriteHeader(401)
         return
@@ -88,22 +91,16 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     db.user.isRegisterd=true
     */
-    safeTokens.mu.Lock()
-    v,ok := safeTokens.Tokens[u]
+    SafeTokens.mu.Lock()
+    v,ok := SafeTokens.Tokens[u]
     if !ok || v.ott!=o{
         w.WriteHeader(401)
-        return
     } else {
         w.WriteHeader(200)
-        delete(safeTokens.Tokens,u)
-        return
+        fmt.Println(a.db.RegisterUser(u))
+        fmt.Println(a.db.IsRegisteredUser(u))
+        delete(SafeTokens.Tokens,u)
     }
-    safeTokens.mu.Unlock()
-
-}
-
-//弊学の学籍番号かどうか確認 ok: a2010123, ng: abc2010123
-func isProperUsername(u string) bool{
-    usernameValidater := regexp.MustCompile(`[a-z]\d{7}`)
-    return usernameValidater.MatchString(u)
+    SafeTokens.mu.Unlock()
+    return
 }

@@ -18,9 +18,11 @@ func InitializeGC(e int){
 
 func gerbageCollect(e int){
     now := time.Now()
-    for k,v := range Tokens {
+    SafeTokens.mu.Lock()
+    for k,v := range SafeTokens.Tokens {
         if now.After(v.registered.Add(time.Duration(e)*time.Minute)) {
-            delete(Tokens,k)
+            delete(SafeTokens.Tokens, k)
         }
     }
+    SafeTokens.mu.Unlock()
 }
