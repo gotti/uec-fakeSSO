@@ -65,12 +65,12 @@ func (users *UserDatabase)IsRegisteredUser(username string)(bool, error){
     if err != nil{
         return true,err
     }
-    if res == nil{
-        return true,errors.New("result not found")
-    }
     var buf UserRecord
     res.Next()
     res.Scan(&buf.username, &buf.registered)
+    if buf.username==""{
+        return true,errors.New("result not found")
+    }
     if buf.registered==1{
         return true,nil
     }

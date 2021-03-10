@@ -4,7 +4,6 @@
 
 # TODO
 現在以下の実装ができていません．
-- UTF-8のメール送信をきちんとやる(UTF-8を解釈できないと文字化け)
 - ポート番号8084がハードコーディングされているのでなんとかしたい
 - 複数のサービスで同じAPIを使えるようにしたいな
 
@@ -48,9 +47,10 @@ UserListFileにはユーザー名を改行区切りで記入したファイル�
     - ワンタイムトークンが正当であること
 
 - HTTPのGETが送信できてレスポンスのステータスコードが見れる言語であり，かつappTokenをユーザに漏洩させない言語であれば任意の言語が使えます．htmlとjavascriptだけではソースからappTokenが見えるので，必ずサーバサイドで実装してください(PHPに一度POSTするなど)． 以下にGolangでの参考実装を示します．
+
 ```go:register.go
 var appToken, username string //適切に初期化されているとします．appTokenは自分で指定するので信用できますが，usernameはユーザ入力なので信用できません．
-reg := regexp.MustCompile(`[a-z]\d{7}`) //ここまで検証しなくてもいいのですが，記号は送信しないようにしてください．(URLがこわれるかも)
+reg := regexp.MustCompile(`^[a-z]\d{7}$`) //ここまで検証しなくてもいいのですが，記号は送信しないようにしてください．(URLがこわれるかも)
 if !reg.MatchString(username) {
     fmt.Println("不適切なユーザ名です")
     return
@@ -67,12 +67,12 @@ if responce.Code != 200{
 
 ```go:verify.go
 var appToken, username, ott string //適切に初期化されているとします．appTokenは自分で指定するので信用できますが，usernameとottはユーザ入力なので信用できません．
-regUser := regexp.MustCompile(`[a-z]\d{7}`) //ここまで検証しなくてもいいのですが，記号は送信しないようにしてください．(URLがこわれるかも)
+regUser := regexp.MustCompile(`^[a-z](\d){7}$`) //ここまで検証しなくてもいいのですが，記号は送信しないようにしてください．(URLがこわれるかも)
 if !reg.MatchString(username) {
     fmt.Println("不適切なユーザ名です")
     return
 }
-regUser := regexp.MustCompile(`[0-9a-f]{6}`) //ここまで検証しなくてもいいのですが，記号は送信しないようにしてください．(URLがこわれるかも)
+regUser := regexp.MustCompile(`^[0-9a-f]{6}$`) //ここまで検証しなくてもいいのですが，記号は送信しないようにしてください．(URLがこわれるかも)
 if !reg.MatchString(ott) {
     fmt.Println("不適切なワンタイムトークンです")
     return

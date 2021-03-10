@@ -37,8 +37,8 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     b,e := a.db.IsRegisteredUser(u)
     if e != nil{
-        w.WriteHeader(500)
-        w.Write([]byte("Internal Server Error in registration check"))
+        w.WriteHeader(401)
+        w.Write([]byte("This user does not exist on our database"))
         return
     }
     if b{
@@ -85,16 +85,6 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte("Improper username format or invalid appToken"))
         return
     }
-    //TODO: database access
-    /*
-    if (db.user.isRegistered){
-        return errors.New("user already registered")
-    }
-    if (db.user.isExists){
-        return errors.New("this user don't have an uec account")
-    }
-    db.user.isRegisterd=true
-    */
     SafeTokens.mu.Lock()
     v,ok := SafeTokens.Tokens[u]
     if !ok || v.ott!=o{
