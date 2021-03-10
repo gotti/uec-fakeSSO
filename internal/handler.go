@@ -32,12 +32,13 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     if t!=a.token || !utils.IsProperUsername(u){
         fmt.Println(t,u,utils.IsProperUsername(u))
         w.WriteHeader(401)
+        w.Write([]byte("Improper username format or invalid appToken"))
         return
     }
     b,e := a.db.IsRegisteredUser(u)
     if e != nil{
-        w.Write([]byte("internal server error"))
         w.WriteHeader(500)
+        w.Write([]byte("Internal Server Error in registration check"))
         return
     }
     if b{
@@ -65,6 +66,8 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
         return
     }
     fmt.Println("sent")
+    w.WriteHeader(200)
+    w.Write([]byte("success"))
 }
 
 type APIVerifyHandler struct {
@@ -79,6 +82,7 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     if t!=a.token || !utils.IsProperUsername(u){
         fmt.Println(t,u)
         w.WriteHeader(401)
+        w.Write([]byte("Improper username format or invalid appToken"))
         return
     }
     //TODO: database access
@@ -95,8 +99,10 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     v,ok := SafeTokens.Tokens[u]
     if !ok || v.ott!=o{
         w.WriteHeader(401)
+        w.Write([]byte("Invalid one time token"))
     } else {
         w.WriteHeader(200)
+        w.Write([]byte("success"))
         fmt.Println(a.db.RegisterUser(u))
         fmt.Println(a.db.IsRegisteredUser(u))
         delete(SafeTokens.Tokens,u)
