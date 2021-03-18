@@ -1,6 +1,7 @@
 package userdb
 
 import (
+    "fmt"
 	"bufio"
 	"database/sql"
 	"errors"
@@ -31,6 +32,7 @@ func (users *UserDatabase)InitializeDB(file string) error{
         return err
     }
     err = users.copyUsersFromFile(file)
+    fmt.Println("copied")
     if err != nil{
         return err
     }
@@ -88,12 +90,14 @@ func (users *UserDatabase)copyUsersFromFile(file string) error{
     for s.Scan(){
         u := s.Text()
         if !utils.IsProperUsername(u){
+            fp.Close()
             return errors.New("Invalid username:"+u)
         }
-        _, err := users.DB.Exec(`INSERT INTO "REGISTRATION" ("ID", "REGISTERED") VALUES (?, ?)`, u, 0)
-        if err != nil{
+        _, _ = users.DB.Exec(`INSERT INTO "REGISTRATION" ("ID", "REGISTERED") VALUES (?, ?)`, u, 0)
+        /*if err != nil{
             return err
-        }
+        }*/
     }
+   fp.Close()
     return nil
 }
