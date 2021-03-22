@@ -1,13 +1,13 @@
 package internal
 import (
-	"crypto/rand"
-	"fmt"
-	"gotti/smtpMail"
+    "crypto/rand"
+    "fmt"
+    "gotti/smtpMail"
     "gotti/utils"
     "gotti/userdb"
-	"net/http"
-	"sync"
-	"time"
+    "net/http"
+    "sync"
+    "time"
 )
 type typeSafeTokens struct{
     mu sync.Mutex
