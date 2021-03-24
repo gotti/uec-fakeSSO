@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"gotti/internal"
 	"gotti/smtpMail"
-    "gotti/userdb"
-
+	"gotti/userdb"
 	"log"
 	"github.com/BurntSushi/toml"
 )
@@ -35,7 +34,6 @@ func main(){
     if err != nil{
         log.Fatal(err)
     }
-    fmt.Println(ServerConfig)
     internal.InitializeGC(ServerConfig.OTTExpire)
     Token = &ServerConfig.APIServerToken
     users.DbPath = ServerConfig.UserListDatabase
