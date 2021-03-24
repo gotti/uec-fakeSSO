@@ -57,7 +57,7 @@ if !reg.MatchString(username) {
     fmt.Println("不適切なユーザ名です")
     return
 }
-url := fmt.Sprintf("https://example.com/api/register?appToken=%s&username=%s", appToken, username)
+url := fmt.Sprintf("https://example.com/register?appToken=%s&username=%s", appToken, username)
 client := &http.Client{}
 responce, _ := client.Get(url)
 if responce.Code != 200{
@@ -79,7 +79,7 @@ if !reg.MatchString(ott) {
     fmt.Println("不適切なワンタイムトークンです")
     return
 }
-url := fmt.Sprintf("https://example.com/api/verify?appToken=%s&username=%s&ott=%s", appToken, username, ott)
+url := fmt.Sprintf("https://example.com/verify?appToken=%s&username=%s&ott=%s", appToken, username, ott)
 client := &http.Client{}
 responce, _ := client.Get(url)
 if responce.Code != 200{
