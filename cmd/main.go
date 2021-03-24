@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"gotti/internal"
 	"gotti/smtpMail"
 	"gotti/userdb"
