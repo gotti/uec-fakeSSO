@@ -31,18 +31,18 @@ func (a APIRegisterHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     t := r.URL.Query().Get("appToken")
     if t!=a.token || !utils.IsProperUsername(u){
         fmt.Println(t,u,utils.IsProperUsername(u))
-        w.WriteHeader(401)
+        w.WriteHeader(400)
         w.Write([]byte("Improper username format or invalid appToken"))
         return
     }
     b,e := a.db.IsRegisteredUser(u)
     if e != nil{
-        w.WriteHeader(401)
+        w.WriteHeader(404)
         w.Write([]byte("This user does not exist on our database"))
         return
     }
     if b{
-        w.WriteHeader(401)
+        w.WriteHeader(409)
         w.Write([]byte("This user is already registered"))
         return
     }
@@ -81,7 +81,7 @@ func (a APIVerifyHandler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
     o := r.URL.Query().Get("ott")
     if t!=a.token || !utils.IsProperUsername(u){
         fmt.Println(t,u)
-        w.WriteHeader(401)
+        w.WriteHeader(400)
         w.Write([]byte("Improper username format or invalid appToken"))
         return
     }
